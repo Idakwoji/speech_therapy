@@ -90,7 +90,7 @@ def compare_sentences(request):
             audio_data = request.FILES['audio']
             # Access name from the form data
             name = request.POST.get('name')
-            print(f"file name: {name}")
+            #print(f"file name: {name}")
             #print(audio_data)
 
             if not audio_data:
@@ -107,11 +107,11 @@ def compare_sentences(request):
             transcribed_sentence = result.get('transcription', '')
             transcribed_sentence = transcribed_sentence.strip().lower()
             transcribed_sentence = transcribed_sentence.replace('.', '')
-            print(f"transcribed sentence: {transcribed_sentence}")
+            #print(f"transcribed sentence: {transcribed_sentence}")
 
             # Fetch a correct sentence from the database (you need to handle this based on your requirements)
             correct_sentence = cache.get(name)
-            print(f"correct sentence from database: {correct_sentence}")
+            #print(f"correct sentence from database: {correct_sentence}")
 
             # Compare sentences and find missing phonemes
             #mistakes = find_mistakes(correct_sentence, transcribed_sentence)
@@ -123,7 +123,7 @@ def compare_sentences(request):
                 'transcribed_sentence': transcribed_sentence,
                 #'missing_phonemes': mistakes,
             }
-            print(response_data)
+            #print(response_data)
             return JsonResponse(response_data)
 
         except Exception as e:
