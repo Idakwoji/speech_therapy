@@ -112,7 +112,7 @@ def compare_sentences(request):
             # Fetch a correct sentence from the database (you need to handle this based on your requirements)
             correct_sentence = cache.get(name)
             #print(f"correct sentence from database: {correct_sentence}")
-
+            correct_sentence = correct_sentence.lower()
             # Compare sentences and find missing phonemes
             #mistakes = find_mistakes(correct_sentence, transcribed_sentence)
             #print(mistakes)
