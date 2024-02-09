@@ -72,17 +72,25 @@ CORS_ALLOWED_ORIGINS = [
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'dummy_db',
-        'USER': 'root',
-        'PASSWORD': 'BlueSky789@',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
-    }
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'logopedie',
+        'USER': 'lukman2024',
+        'PASSWORD': 'BlueSky2024',
+        'HOST': '83.85.157.106',
+        'PORT': '5432',
+    },
+    'public_templates': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'public_templates',
+        'USER': 'lukman2024',
+        'PASSWORD': 'BlueSky2024',
+        'HOST': '83.85.157.106',
+        'PORT': '5432',
+    },
 }
+
+DATABASE_ROUTERS = ['backend.routers.PublicTemplatesRouter']
+
 
 CACHES = {
     'default': {
