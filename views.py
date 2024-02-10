@@ -91,8 +91,10 @@ model_classes = [
         ]
 
 #to check if table can be used or not
-def check_table_existence(request, page_name):
-    if request.method == 'GET':
+def check_page_existence(request):
+    if request.method == 'POST':
+        data = request.json()
+        page_name = data.get('page_name')
         # Check if the provided page_name exists as a table in the public_templates database
         with connections['public_templates'].cursor() as cursor:
             cursor.execute(
@@ -116,11 +118,14 @@ def dynamic_search(request, query):
 
     for model_class in model_classes:
         table_name = model_class._meta.db_table
-        table_results = model_class.objects.filter(
+        table_result = model_class.objects.filter(
             Q(name__istartswith=query) | Q(name__icontains=f" {query}")
-        ).values('name', 'url')
+        ).values('name')
 
-        results.extend(list(table_results))
+        # Check if there are matching names before appending to results
+        if table_result.exists():
+            result = {'table_name': table_name, 'name': list(table_result)}
+            results.append(result)
 
     return JsonResponse({'results': results})
 
@@ -249,7 +254,6 @@ def fetch_all_pages(request):
         with connections['public_templates'].cursor() as cursor:
             cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
             all_pages = [row[0] for row in cursor.fetchall()]
-
         return JsonResponse({'pages': all_pages})
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
@@ -257,8 +261,10 @@ def fetch_all_pages(request):
 
 
 #fetch the page and its blocks based on the table name (page name) that was sent
-def fetch_page_blocks(request, page_name):
-    if request.method == 'GET':
+def fetch_page_blocks(request):
+    if request.method == 'POST':
+        data = request.json()
+        page_name = data.get('page_name')
         # Set the schema for the table
         PageBlock._meta.db_table = page_name
 
@@ -279,7 +285,7 @@ def fetch_page_blocks(request, page_name):
         }
 
         for block in blocks:
-            block_data = {'name': block['name'], 'associated_files': []}
+            block_data = {'name': block['name'], 'associated_files': {}}
             file_extensions = options.get(block['option'], [])
             url = block['url']
             matching_files = []
@@ -289,7 +295,7 @@ def fetch_page_blocks(request, page_name):
                     matching_files.append(file_path)
                     #block_data['associated_files'].append(file_path)
             zip_stream = generate_zip_stream(matching_files)
-            block_data['associated_files'].append({"files": zip_stream, "content_type":'application/zip'})
+            block_data['associated_files'] = {"files": zip_stream, "content_type":'application/zip'}
 
             response_data['blocks'].append(block_data)
 
