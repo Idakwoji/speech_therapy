@@ -12,7 +12,7 @@ import os
 import zipfile
 import mimetypes
 from random import sample
-from .models import PageBlock, HumorEnGeluiden, FysiekeGedrag, MuziekEnGeluid, TafelDekken, PersoonlijkenBezittelijkVoornaamwoord, Gevaarlijk, OmgaanMetSpullen, TandenVerzorgen, VerbondenheidEnGevoelens,Gevoel,Ontbijten, Tekenen, AanUitkleding, Groente, OpDeBeurt, Tellen, Afscheid,Groeten,OpReis,Tijd,AlgemeenMensen,Gymnastiek,OpenEnDichtDoen,Toeval,AvondEten,HaarVerzorgen,Overig,TuinEnPark,Badkamer,HebbenEnDelen,Personen,Uitjes,Bal,Herfst, Planten,Vergelijken, BelangrijkeWoordjes,Huis,PoepenEnPlassen,Verjaardag,Boerderij,HuisWerken,Rekenen,Voortuigen,BoodschappenDoen,Huisdieren,RichtingDeWeg,Vormen,Bos,Kerst,RollenspelEnSprookjes,Vraagwoorden, Buiten,Kleding,Ruimte,Vuur,Communiceren,KleineDiertjes,SamenAktiviteiten,Wassen,Denken,Kleuren,Schoen,Water,Dieren,Knutselen, Schrijven, Weer, Dierentuin,Koken,Sinterklaas,WegwijsInDeGroep,Doen,KopjesEnBakers,Smaken,Welkom, Drankjes,Kringroutines,Snoep,Winter,Drinken,Kruipen,Speelgoed,WinterKleding,Emotie,Lente,Speeltuin,ZeeSwembad,Eruitzien,Lichaamsdelen,Spelen,Ziek,Eten,Lunch,SpelenEnWerken,Zintuigen,Familie,MensenEnRelaties,Spelletje,Zomer,Fruit,Meten,StraatEnVerkeer
+from .models import PageName, PageBlock, HumorEnGeluiden, FysiekeGedrag, MuziekEnGeluid, TafelDekken, PersoonlijkenBezittelijkVoornaamwoord, Gevaarlijk, OmgaanMetSpullen, TandenVerzorgen, VerbondenheidEnGevoelens,Gevoel,Ontbijten, Tekenen, AanUitkleding, Groente, OpDeBeurt, Tellen, Afscheid,Groeten,OpReis,Tijd,AlgemeenMensen,Gymnastiek,OpenEnDichtDoen,Toeval,AvondEten,HaarVerzorgen,Overig,TuinEnPark,Badkamer,HebbenEnDelen,Personen,Uitjes,Bal,Herfst, Planten,Vergelijken, BelangrijkeWoordjes,Huis,PoepenEnPlassen,Verjaardag,Boerderij,HuisWerken,Rekenen,Voortuigen,BoodschappenDoen,Huisdieren,RichtingDeWeg,Vormen,Bos,Kerst,RollenspelEnSprookjes,Vraagwoorden, Buiten,Kleding,Ruimte,Vuur,Communiceren,KleineDiertjes,SamenAktiviteiten,Wassen,Denken,Kleuren,Schoen,Water,Dieren,Knutselen, Schrijven, Weer, Dierentuin,Koken,Sinterklaas,WegwijsInDeGroep,Doen,KopjesEnBakers,Smaken,Welkom, Drankjes,Kringroutines,Snoep,Winter,Drinken,Kruipen,Speelgoed,WinterKleding,Emotie,Lente,Speeltuin,ZeeSwembad,Eruitzien,Lichaamsdelen,Spelen,Ziek,Eten,Lunch,SpelenEnWerken,Zintuigen,Familie,MensenEnRelaties,Spelletje,Zomer,Fruit,Meten,StraatEnVerkeer
 #from .compare import find_mistakes
 
 # Dictionary to store correct transcriptions
@@ -89,7 +89,12 @@ model_classes = [
             Lunch, SpelenEnWerken, Zintuigen, Familie, MensenEnRelaties, Spelletje, Zomer, Fruit,
             Meten, StraatEnVerkeer
         ]
-
+options = {
+            'image_only': ('.jpeg', '.jpg', '.png', '.svg', '.gif'),
+            'audio_only': ('.mp3', '.wav'),
+            'video_only': ('.mp4'),
+            'all_options': ('.jpeg', '.jpg', '.png', '.svg', '.gif', '.mp3', '.wav', '.mp4')
+        }
 #to check if table can be used or not
 def check_page_existence(request):
     if request.method == 'POST':
@@ -150,95 +155,42 @@ def get_table_data(request):
 
         return JsonResponse({'error': 'Table not found'})
 
-def generate_zip_stream(matching_files):
-    # Create an in-memory ZIP file
-    zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w') as zipf:
-        for file_path in matching_files:
-            # Add each file to the ZIP file
-            zipf.write(file_path)
-
-    # Move the buffer's position to the beginning for reading
-    zip_buffer.seek(0)
-    
-    return zip_buffer
-
-#fetch the files to be displayed as the blocks are being created (create theme page for admin and therapist)
-def fetch_files(request):
-    if request.method == 'POST':
-        data = request.json()  # Assuming JSON data is sent in the request body
-
-        name = data.get('name')
-        table_name = data.get('table_name')
-        option = data.get('option')  # Default to option 0 if not provided
-
-        options = {
-            'image_only': ('.jpeg', '.jpg', '.png', '.svg', '.gif'),
-            'audio_only': ('.mp3', '.wav'),
-            'video_only': ('.mp4'),
-            'all_options': ('.jpeg', '.jpg', '.png', '.svg', '.gif', '.mp3', '.wav', '.mp4')
-        }
-
-        file_extensions = options.get(option, [])
-        matching_files = []
-
-        # Dynamically get the model class based on table_name
-        model_class = None
-        for potential_model in model_classes:
-            if potential_model._meta.db_table == table_name:
-                model_class = potential_model
-                break
-
-        if model_class:
-            # Query the database for the url based on name
-            try:
-                url = model_class.objects.get(name=name).url
-            except model_class.DoesNotExist:
-                return JsonResponse({'error': 'File not found'}, status=404)
-
-            for ext in file_extensions:
-                #file_path = f"{url}{ext}"
-                file_path = os.path.join(url, f"{ext}")
-                if os.path.exists(file_path):
-                    matching_files.append(file_path)
-
-            if not matching_files:
-                return JsonResponse({'error': 'Files not found'}, status=404)
-
-            # Prepare a ZIP archive containing all matching files
-            zip_stream = generate_zip_stream(matching_files)
-            response = HttpResponse(zip_stream, content_type='application/zip')
-            response['Content-Disposition'] = f'attachment; filename=matching_files.zip'
-            return response
-
-    return JsonResponse({'error': 'Invalid request method'}, status=400)
-
 #save the page that was created to the public templates database
 def save_page(request):
     if request.method == 'POST':
         data = request.json()  # Assuming JSON data is sent in the request body
 
-        page_name = data.get('thema_name')
-        blocks = data.get('blocks', [])
+        page_name_value = data.get('thema_name')
+        blocks_data = data.get('blocks', [])
 
-        # Create PageBlocks for each item in the Blocks list
-        for block_data in blocks:
+        # Create PageName
+        page_name = PageName.objects.create(page_name=page_name_value)
+
+        # Create PageBlock instances and add them to the PageName's blocks field
+        for block_data in blocks_data:
             name = block_data.get('name')
             table_name = block_data.get('table_name')
             option = block_data.get('option')
 
-            
-            # Fetch the URL from the existing database using table_name and name
+            # Dynamically get the model class based on table_name
+            model_class = None
             for potential_model in model_classes:
                 if potential_model._meta.db_table == table_name:
-                    url = potential_model.objects.get(name=name).url
+                    model_class = potential_model
                     break
 
-            # Set the schema for the table
-            PageBlock._meta.db_table = page_name
+            if model_class:
+                # Query the database for the URL based on name
+                try:
+                    url = model_class.objects.get(name=name).url
+                except model_class.DoesNotExist:
+                    return JsonResponse({'error': 'File not found'}, status=404)
 
-            # Create a new PageBlock
-            PageBlock.objects.create(name=name, url=url, option=option)
+                # Create a new PageBlock instance
+                new_block = PageBlock.objects.create(name=name, url=url, option=option)
+
+                # Add the new block to the PageName's blocks field
+                page_name.blocks.add(new_block)
 
         return JsonResponse({'success': True})
 
@@ -247,62 +199,140 @@ def save_page(request):
 
 #fetch public themas (theme names or page names corresponding to the names of all the current tables in the database) 
 
+# def fetch_all_pages(request):
+#     if request.method == 'GET':
+#         # Fetch all available pages (table names) from the public_templates database
+#         with connections['public_templates'].cursor() as cursor:
+#             cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+#             all_pages = [row[0] for row in cursor.fetchall()]
+#         return JsonResponse({'pages': all_pages})
+
+#     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
 
 def fetch_all_pages(request):
     if request.method == 'GET':
-        # Fetch all available pages (table names) from the public_templates database
-        with connections['public_templates'].cursor() as cursor:
-            cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
-            all_pages = [row[0] for row in cursor.fetchall()]
-        return JsonResponse({'pages': all_pages})
+        # Fetch all available page names from the PageName table
+        all_pages = PageName.objects.values_list('page_name', flat=True)
+        return JsonResponse({'pages': list(all_pages)})
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-
-
-#fetch the page and its blocks based on the table name (page name) that was sent
 def fetch_page_blocks(request):
     if request.method == 'POST':
         data = request.json()
         page_name = data.get('page_name')
-        # Set the schema for the table
-        PageBlock._meta.db_table = page_name
 
-        # Fetch all blocks (rows) from the specified page (table)
-        blocks = PageBlock.objects.all().values('name', 'url', 'option')
+        try:
+            # Fetch the PageName instance
+            page = PageName.objects.get(page_name=page_name)
+        except PageName.DoesNotExist:
+            return JsonResponse({'error': f'Page with name {page_name} does not exist'}, status=404)
 
-        # Prepare the response data
-        response_data = {
-            'page_name': page_name,
-            'blocks': [],
-        }
-
-        options = {
-            'image_only': ('.jpeg', '.jpg', '.png', '.svg', '.gif'),
-            'audio_only': ('.mp3', '.wav'),
-            'video_only': ('.mp4'),
-            'all_options': ('.jpeg', '.jpg', '.png', '.svg', '.gif', '.mp3', '.wav', '.mp4')
-        }
-
+        # Fetch all blocks associated with the specified PageName
+        blocks = page.blocks.all().values('name', 'option')
+        page_blocks = []
         for block in blocks:
-            block_data = {'name': block['name'], 'associated_files': {}}
-            file_extensions = options.get(block['option'], [])
-            url = block['url']
-            matching_files = []
-            for ext in file_extensions:
-                file_path = os.path.join(url, f"{ext}")
-                if os.path.exists(file_path):
-                    matching_files.append(file_path)
-                    #block_data['associated_files'].append(file_path)
-            zip_stream = generate_zip_stream(matching_files)
-            block_data['associated_files'] = {"files": zip_stream, "content_type":'application/zip'}
+            items = {}
+            items["name"] = block['name']
+            items["option"] = block["option"]
+            page_blocks.append(items)
+        return JsonResponse({'blocks': page_blocks})
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-            response_data['blocks'].append(block_data)
+#problem with two databases, which to fetch from on the two different scenarios??????????????
+def get_image(request):
+    if request.method == "POST":
+        data = request.json()
+        name = data.get("name")
+        try:
+            page_block = PageBlock.objects.get(name=name)
+        except PageBlock.DoesNotExist:
+            return JsonResponse({'error': f'Block with name {name} does not exist'}, status=404)
 
-        return HttpResponse(response_data)
+        url = page_block.url
+
+        option = options.get("image_only")  # Fix typo: square brackets instead of parentheses
+
+        file_path = None
+        for ext in option:
+            path = os.path.join(url, f"{name}{ext}")
+            if os.path.exists(path):
+                file_path = path
+                break
+
+        if file_path:
+            with open(file_path, 'rb') as image_file:
+                image = image_file.read()
+                response = HttpResponse(image, content_type='image/*')  # Fix content_type to 'image/*'
+                return response
+        else:
+            return HttpResponse("Image file not found", status=404)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+                
+#fetch audio
+def get_audio(request):
+    if request.method == "POST":
+        data = request.json()
+        name = data.get("name")
+        try:
+            page_block = PageBlock.objects.get(name=name)
+        except PageBlock.DoesNotExist:
+            return JsonResponse({'error': f'Block with name {name} does not exist'}, status=404)
+
+        url = page_block.url
+
+        option = options.get("audio_only")
+
+        file_path = None
+        for ext in option:
+            path = os.path.join(url, f"{name}{ext}")
+            if os.path.exists(path):
+                file_path = path
+                break
+
+        if file_path:
+            with open(file_path, 'rb') as audio_file:
+                audio = audio_file.read()
+                response = HttpResponse(audio, content_type='audio/*')
+                return response
+        else:
+            return HttpResponse("Audio file not found", status=404)
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
+#fetch video
+def get_video(request):
+    if request.method == "POST":
+        data = request.json()
+        name = data.get("name")
+        try:
+            page_block = PageBlock.objects.get(name=name)
+        except PageBlock.DoesNotExist:
+            return JsonResponse({'error': f'Block with name {name} does not exist'}, status=404)
+
+        url = page_block.url
+
+        option = options.get("video_only")
+
+        file_path = None
+        for ext in option:
+            path = os.path.join(url, f"{name}{ext}")
+            if os.path.exists(path):
+                file_path = path
+                break
+
+        if file_path:
+            with open(file_path, 'rb') as video_file:
+                video = video_file.read()
+                response = HttpResponse(video, content_type='video/mp4')
+                return response
+        else:
+            return HttpResponse("Video file not found", status=404)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 # @csrf_exempt
 # def get_audio(request):

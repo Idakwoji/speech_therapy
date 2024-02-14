@@ -485,12 +485,25 @@ class StraatEnVerkeer(BaseTable):
         db_table = "straatEnVerkeer"
 
 # standard setup of public templates database        
+class PageName(models.Model):
+    page_name = models.CharField(max_length=255)
+    blocks = models.ManyToManyField('PageBlock', related_name='page_names', blank=True)
+
+    def __str__(self):
+        return self.page_name
+    class Meta:
+        # Use the exact page_name as the table name
+        db_table = 'Page Names'
+        using = 'public_templates'
+
 class PageBlock(models.Model):
     name = models.CharField(max_length=255)
     url = models.CharField(max_length=255)
-    option = models.IntegerField()
+    option = models.CharField(max_length=255)
 
+    def __str__(self):
+        return self.name
     class Meta:
         # Use the exact page_name as the table name
-        db_table = '%(page_name)s'
+        db_table = 'Page Blocks'
         using = 'public_templates'
