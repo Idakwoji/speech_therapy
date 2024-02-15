@@ -9,66 +9,28 @@ from io import BytesIO
 import json
 import base64
 import os
-import zipfile
+#import zipfile
 import mimetypes
 from random import sample
 from .models import PageName, PageBlock, HumorEnGeluiden, FysiekeGedrag, MuziekEnGeluid, TafelDekken, PersoonlijkenBezittelijkVoornaamwoord, Gevaarlijk, OmgaanMetSpullen, TandenVerzorgen, VerbondenheidEnGevoelens,Gevoel,Ontbijten, Tekenen, AanUitkleding, Groente, OpDeBeurt, Tellen, Afscheid,Groeten,OpReis,Tijd,AlgemeenMensen,Gymnastiek,OpenEnDichtDoen,Toeval,AvondEten,HaarVerzorgen,Overig,TuinEnPark,Badkamer,HebbenEnDelen,Personen,Uitjes,Bal,Herfst, Planten,Vergelijken, BelangrijkeWoordjes,Huis,PoepenEnPlassen,Verjaardag,Boerderij,HuisWerken,Rekenen,Voortuigen,BoodschappenDoen,Huisdieren,RichtingDeWeg,Vormen,Bos,Kerst,RollenspelEnSprookjes,Vraagwoorden, Buiten,Kleding,Ruimte,Vuur,Communiceren,KleineDiertjes,SamenAktiviteiten,Wassen,Denken,Kleuren,Schoen,Water,Dieren,Knutselen, Schrijven, Weer, Dierentuin,Koken,Sinterklaas,WegwijsInDeGroep,Doen,KopjesEnBakers,Smaken,Welkom, Drankjes,Kringroutines,Snoep,Winter,Drinken,Kruipen,Speelgoed,WinterKleding,Emotie,Lente,Speeltuin,ZeeSwembad,Eruitzien,Lichaamsdelen,Spelen,Ziek,Eten,Lunch,SpelenEnWerken,Zintuigen,Familie,MensenEnRelaties,Spelletje,Zomer,Fruit,Meten,StraatEnVerkeer
-#from .compare import find_mistakes
 
-# Dictionary to store correct transcriptions
-#correct_transcriptions = {}
-# Fetch all audio instances from the database once
-#all_words = Word.objects.all()
-#all_sentences = Sentence.objects.all()
+#set user sessions
+def set_session(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')  # Get the username from the POST data
+        request.session['username'] = username
+        return HttpResponse('Session data set.')
+    else:
+        return HttpResponse('Invalid request method', status=400)
 
-# @csrf_exempt
-# def get_therapist_profile(request):
-#     #implemant a code to fetch the profile of the therapist
-#     #return details that will be displayed on the profile
-    
-# @csrf_exempt
-# def get_client_profile(request):
-#     #implement a code to fetch the client profile from the database
-#     #return client details that will be displayed on the profile
-    
-# @csrf_exempt
-# def get_word(request):
-    
-#@csrf_exempt
-#def get_random_words(request):
- # Randomly select 10 audio instances
- #   audio_instances_for_response = sample(list(all_words), min(10, len(all_words)))
-    # # Prepare data for response and store correct transcriptions
-    # audio_data = []
-    # for audio_instance in audio_instances_for_response:
-    #     audio_id = audio_instance.id
-    #     audio_name = audio_instance.name
-    #     correct_transcription = audio_instance.correct_transcription
-    #     audio_data.append({
-    #         'id':audio_id,
-    #         'name': audio_name,
-    #         })
-    #     cache.set(audio_name, correct_transcription)
-    #     #print(audio_data)
-    # return JsonResponse(audio_data, safe=False)
+def get_session(request):
+    username = request.session.get('username', 'DefaultUsername')
+    return HttpResponse(f'Username from session: {username}')
 
-# @csrf_exempt
-# def get_random_sentences(request):
-#     # Randomly select 10 audio instances
-#     audio_instances_for_response = sample(list(all_sentences), min(10, len(all_sentences)))
-#     # Prepare data for response and store correct transcriptions
-#     audio_data = []
-#     for audio_instance in audio_instances_for_response:
-#         audio_id = audio_instance.id
-#         audio_name = audio_instance.name
-#         correct_transcription = audio_instance.correct_transcription
-#         audio_data.append({
-#             'id':audio_id,
-#             'name': audio_name,
-#             })
-#         cache.set(audio_name, correct_transcription)
-#         #print(audio_data)
-#     return JsonResponse(audio_data, safe=False)
+
+    
+
+
 
 #initialize all database model classes in the existing words database
 model_classes = [
@@ -112,7 +74,7 @@ def check_page_existence(request):
         response_data = {'exists': False}
         if result:
             response_data['exists'] = True
-
+            
         return JsonResponse(response_data)
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)

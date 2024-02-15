@@ -89,6 +89,10 @@ DATABASES = {
     },
 }
 
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+
 DATABASE_ROUTERS = ['backend.routers.PublicTemplatesRouter']
 
 

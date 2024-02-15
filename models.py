@@ -492,9 +492,9 @@ class PageName(models.Model):
     def __str__(self):
         return self.page_name
     class Meta:
+        managed = False
         # Use the exact page_name as the table name
         db_table = 'Page Names'
-        using = 'public_templates'
 
 class PageBlock(models.Model):
     name = models.CharField(max_length=255)
@@ -504,6 +504,8 @@ class PageBlock(models.Model):
     def __str__(self):
         return self.name
     class Meta:
+        managed = False
         # Use the exact page_name as the table name
         db_table = 'Page Blocks'
-        using = 'public_templates'
+PageName.objects.using("public_templates")
+PageBlock.objects.using("public_templates")
