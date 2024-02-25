@@ -16,7 +16,7 @@ SECRET_KEY = 'django-insecure-698#au-tb8!orkom)p&!2r&3-gr0dp)=6g0rnlc_6g)_q%dv0$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['logopediemateriaal.com', 'www.logopediemateriaal.com', '127.0.0.1']
+ALLOWED_HOSTS = ['logopediemateriaal.com', 'www.logopediemateriaal.com', '83.85.157.106', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'backend',
     'corsheaders',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -64,6 +65,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 CORS_ALLOWED_ORIGINS = [
     # Add the origins (domains) that you want to allow
     "http://localhost:3000",  # Example: Your frontend's address during development
+    "http://127.0.0.1:5173",
     "https://logopediemateriaal.com",
 ]
 
@@ -79,21 +81,13 @@ DATABASES = {
         'HOST': '83.85.157.106',
         'PORT': '5432',
     },
-    'public_templates': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'public_templates',
-        'USER': 'lukman2024',
-        'PASSWORD': 'BlueSky2024',
-        'HOST': '83.85.157.106',
-        'PORT': '5432',
-    },
 }
 
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
-DATABASE_ROUTERS = ['backend.routers.PublicTemplatesRouter']
+#DATABASE_ROUTERS = ['backend.routers.PublicTemplatesRouter']
 
 
 CACHES = {

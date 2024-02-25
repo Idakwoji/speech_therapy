@@ -12,7 +12,7 @@ import os
 #import zipfile
 import mimetypes
 from random import sample
-from .models import ThemeName, PageName, PageBlock, HumorEnGeluiden, FysiekeGedrag, MuziekEnGeluid, TafelDekken, PersoonlijkenBezittelijkVoornaamwoord, Gevaarlijk, OmgaanMetSpullen, TandenVerzorgen, VerbondenheidEnGevoelens,Gevoel,Ontbijten, Tekenen, AanUitkleding, Groente, OpDeBeurt, Tellen, Afscheid,Groeten,OpReis,Tijd,AlgemeenMensen,Gymnastiek,OpenEnDichtDoen,Toeval,AvondEten,HaarVerzorgen,Overig,TuinEnPark,Badkamer,HebbenEnDelen,Personen,Uitjes,Bal,Herfst, Planten,Vergelijken, BelangrijkeWoordjes,Huis,PoepenEnPlassen,Verjaardag,Boerderij,HuisWerken,Rekenen,Voortuigen,BoodschappenDoen,Huisdieren,RichtingDeWeg,Vormen,Bos,Kerst,RollenspelEnSprookjes,Vraagwoorden, Buiten,Kleding,Ruimte,Vuur,Communiceren,KleineDiertjes,SamenAktiviteiten,Wassen,Denken,Kleuren,Schoen,Water,Dieren,Knutselen, Schrijven, Weer, Dierentuin,Koken,Sinterklaas,WegwijsInDeGroep,Doen,KopjesEnBakers,Smaken,Welkom, Drankjes,Kringroutines,Snoep,Winter,Drinken,Kruipen,Speelgoed,WinterKleding,Emotie,Lente,Speeltuin,ZeeSwembad,Eruitzien,Lichaamsdelen,Spelen,Ziek,Eten,Lunch,SpelenEnWerken,Zintuigen,Familie,MensenEnRelaties,Spelletje,Zomer,Fruit,Meten,StraatEnVerkeer
+from .models import CatLev0, CatLev1, CatLev2, CatLev3, ThemeName, PageName, PageBlock, HumorEnGeluiden, FysiekeGedrag, MuziekEnGeluid, TafelDekken, PersoonlijkenBezittelijkVoornaamwoord, Gevaarlijk, OmgaanMetSpullen, TandenVerzorgen, VerbondenheidEnGevoelens,Gevoel,Ontbijten, Tekenen, AanUitkleding, Groente, OpDeBeurt, Tellen, Afscheid,Groeten,OpReis,Tijd,AlgemeenMensen,Gymnastiek,OpenEnDichtDoen,Toeval,AvondEten,HaarVerzorgen,Overig,TuinEnPark,Badkamer,HebbenEnDelen,Personen,Uitjes,Bal,Herfst, Planten,Vergelijken, BelangrijkeWoordjes,Huis,PoepenEnPlassen,Verjaardag,Boerderij,HuisWerken,Rekenen,Voortuigen,BoodschappenDoen,Huisdieren,RichtingDeWeg,Vormen,Bos,Kerst,RollenspelEnSprookjes,Vraagwoorden, Buiten,Kleding,Ruimte,Vuur,Communiceren,KleineDiertjes,SamenAktiviteiten,Wassen,Denken,Kleuren,Schoen,Water,Dieren,Knutselen, Schrijven, Weer, Dierentuin,Koken,Sinterklaas,WegwijsInDeGroep,Doen,KopjesEnBakers,Smaken,Welkom, Drankjes,Kringroutines,Snoep,Winter,Drinken,Kruipen,Speelgoed,WinterKleding,Emotie,Lente,Speeltuin,ZeeSwembad,Eruitzien,Lichaamsdelen,Spelen,Ziek,Eten,Lunch,SpelenEnWerken,Zintuigen,Familie,MensenEnRelaties,Spelletje,Zomer,Fruit,Meten,StraatEnVerkeer
 
 #set user sessions
 def set_session(request):
@@ -31,7 +31,7 @@ def get_session(request):
     
 
 
-
+category_levels = [CatLev0, CatLev1, CatLev2, CatLev3]
 #initialize all database model classes in the existing words database
 model_classes = [
             HumorEnGeluiden, FysiekeGedrag, MuziekEnGeluid, TafelDekken,
@@ -55,57 +55,188 @@ model_classes = [
 options = {
             'image': ('.jpeg', '.jpg', '.png', '.svg', '.gif'),
             'audio': ('.mp3', '.wav'),
-            'video': ('.mp4')
+            'video': ('.mp4',)
         }
 #to check if table can be used or not
+@csrf_exempt
 def check_theme_existence(request):
     if request.method == 'POST':
-        data = request.json()
+        data = json.loads(request.body)
         theme_name = data.get('theme_name')
 
-        # Check if the specified theme_name exists in the "Theme Names" table of the public_templates database
-        with connections['public_templates'].cursor() as cursor:
-            cursor.execute(
-                "SELECT theme_name FROM public.\"Theme Names\" WHERE theme_name = %s",
-                [theme_name]
-            )
-            result = cursor.fetchone()
+        # Query the ThemeName model to check if the specified theme_name exists
+        theme_exists = ThemeName.objects.filter(theme_name=theme_name).exists()
 
         # Prepare the response based on whether the theme_name exists or not
-        response_data = {'exists': False}
-        if result:
-            response_data['exists'] = True
-            
+        response_data = {'exists': theme_exists}
         return JsonResponse(response_data)
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-#use dynamic search to find words (create theme page for admin and therapist)
-def dynamic_search(request):
+@csrf_exempt
+def perform_category_search(request):
+    # Implement the logic to search all category levels for the query
     if request.method == 'POST':
-        data = request.json()  # Assuming the data is sent in the POST form data
-        query = data.get('query')
-        if query:
-            results = []
-            for model_class in model_classes:
-                table_name = model_class._meta.db_table
-                table_result = model_class.objects.filter(
-                    Q(name__istartswith=query) | Q(name__icontains=f" {query}")
-                ).values('name', 'url')
-                # Check if there are matching names before appending to results
-                if table_result.exists():
-                    for entry in table_result:
-                        result = {'name': entry['name'], 'table_name': table_name}
-                        url = entry['url']
-                        for option, extensions in options.items():
-                            for ext in extensions:
-                                file_path = os.path.join(url, f"{url}{ext}")
-                                if os.path.exists(file_path):
-                                    result[option] = file_path
-                        results.append(result)
-            return JsonResponse({'results': results})
+        data = json.loads(request.body)
+        query = data.get("query")
+        for model in category_levels:
+            match = model.objects.filter(name__icontains=query).first()
+            if match:
+                return fetch_subcategories_or_data(match, model)
 
-    return JsonResponse({'error': 'Invalid request method or missing query'}, status=400)
+def fetch_subcategories_or_data(match, model):
+    next_level_query = None
+    response_data = {}
+    new_level = None 
+    # Using the match level to determine the next level's query
+    if model == CatLev0:
+        next_level_query = CatLev1.objects.filter(cat_lev0=match)
+        new_level = "CatLev1"
+    elif model == CatLev1:
+        next_level_query = CatLev2.objects.filter(cat_lev1=match)
+        new_level = "CatLev2"
+    elif model == CatLev2:
+        next_level_query = CatLev3.objects.filter(cat_lev2=match)
+        new_level = "CatLev3"
+
+    if next_level_query and next_level_query.exists():
+        response_data["category_level"] = new_level
+        response_data["categories"] = list(next_level_query.values('id', 'name'))
+        return JsonResponse(response_data, safe=False)
+    
+    # If no subcategories found, find the related data table
+    return fetch_data_table_entries(match)
+
+@csrf_exempt
+def fetch_next_subcategories_or_data(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        word_id = data.get('id')
+        model = data.get("category_level")
+        next_level_query = None
+        new_level= None
+        match = None
+        response_data = {}
+        # Using the match level to determine the next level's query
+        if model == "CatLev0":
+            match = CatLev0.objects.filter(word_id)
+            next_level_query = CatLev1.objects.filter(cat_lev0=match)
+            new_level = "CatLev1"
+            # If no subcategories found, find the related data table
+            if not next_level_query:
+                return fetch_data_table_entries(match)
+            
+        elif model == "CatLev1":
+            match = CatLev1.objects.filter(word_id)
+            next_level_query = CatLev2.objects.filter(cat_lev1=match)
+            new_level = "CatLev2"
+            # If no subcategories found, find the related data table
+            if not next_level_query:
+                return fetch_data_table_entries(match)
+            
+        elif model == "CatLev2":
+            match = CatLev2.objects.filter(word_id)
+            next_level_query = CatLev3.objects.filter(cat_lev2=match)
+            new_level = "CatLev3"
+            # If no subcategories found, find the related data table
+            if not next_level_query:
+                return fetch_data_table_entries(match)
+            
+        if next_level_query and next_level_query.exists():
+            response_data["category_level"] = new_level
+            response_data["categories"] = list(next_level_query.values('id', 'name'))
+            return JsonResponse(response_data, safe=False)
+        
+        
+
+def collect_category_ids(match):
+    category_ids = {'cat_lev0': None, 'cat_lev1': None, 'cat_lev2': None, 'cat_lev3': None}
+
+    # Traverse back from CatLev3 to CatLev0, collecting IDs
+    if isinstance(match, CatLev3):
+        category_ids['cat_lev3'] = match.id
+        match = match.cat_lev2
+    if isinstance(match, CatLev2):
+        category_ids['cat_lev2'] = match.id
+        match = match.cat_lev1
+    if isinstance(match, CatLev1):
+        category_ids['cat_lev1'] = match.id
+        match = match.cat_lev0
+    if isinstance(match, CatLev0):
+        category_ids['cat_lev0'] = match.id
+
+    return category_ids
+
+def find_matching_data_table(category_ids):
+    # Assuming a list of your data table models and a generic way to access their first row's category information
+   # Replace with your actual data table models
+    for model in model_classes:
+        first_row = model.objects.first()
+        if first_row:
+            # Assuming each model has a method or properties to access its category level IDs
+            if (first_row.cat_lev0 == category_ids['cat_lev0'] and
+                first_row.cat_lev1 == category_ids['cat_lev1'] and
+                first_row.cat_lev2 == category_ids['cat_lev2'] and
+                first_row.cat_lev3 == category_ids['cat_lev3']):
+                return model  # Found the matching table
+    
+    return None  # No matching table found
+
+def fetch_data_table_entries(match):
+    # Collect category IDs
+    category_ids = collect_category_ids(match)
+    
+    # Find the matching data table
+    matching_table = find_matching_data_table(category_ids)
+    
+    if matching_table:
+        results = []
+        # Logic to return data from the matching table
+        # For example, return all entries from the matching table as a JsonResponse
+        entries = matching_table.objects.all().values('id', 'name', "url")
+        table_name = matching_table._meta.db_table
+        for entry in entries:
+            result = {"id": entry["id"], 'name': entry['name'], 'table_name': table_name}
+            url = entry['url']
+            for option, extensions in options.items():
+                for ext in extensions:
+                    file_path = os.path.join(url, f"{url}{ext}")
+                    if os.path.exists(file_path):
+                        result[option] = file_path
+            results.append(result)
+        return JsonResponse(results, safe=False)
+    
+    # Handle case where no matching table is found
+    return JsonResponse({'message': 'No matching data table found.'}, status=404)
+
+
+#use dynamic search to find words (create theme page for admin and therapist)
+# @csrf_exempt
+# def dynamic_search(request):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)  # Assuming the data is sent in the POST form data
+#         query = data.get('query')
+#         if query:
+#             results = []
+#             for model_class in model_classes:
+#                 table_name = model_class._meta.db_table
+#                 table_result = model_class.objects.filter(
+#                     Q(name__istartswith=query) | Q(name__icontains=f" {query}")
+#                 ).values('name', 'url')
+#                 # Check if there are matching names before appending to results
+#                 if table_result.exists():
+#                     for entry in table_result:
+#                         result = {'name': entry['name'], 'table_name': table_name}
+#                         url = entry['url']
+#                         for option, extensions in options.items():
+#                             for ext in extensions:
+#                                 file_path = os.path.join(url, f"{url}{ext}")
+#                                 if os.path.exists(file_path):
+#                                     result[option] = file_path
+#                         results.append(result)
+#             return JsonResponse({'results': results})
+
+#     return JsonResponse({'error': 'Invalid request method or missing query'}, status=400)
 #find words by going through all the tables (create theme page for admin and therapist)
 # def get_table_names(request):
 #     table_names = [model_class._meta.db_table for model_class in model_classes]
@@ -128,9 +259,11 @@ def dynamic_search(request):
 #         return JsonResponse({'error': 'Table not found'})
 
 #save the page that was created to the public templates database
+
+@csrf_exempt
 def save_theme(request):
     if request.method == 'POST':
-        data = request.json()
+        data = json.loads(request.body)
         theme_name_value = data.get('theme_name')
         theme = ThemeName.objects.create(theme_name=theme_name_value)
         if theme:
@@ -139,9 +272,10 @@ def save_theme(request):
             return JsonResponse({'error': 'There was an issue saving the theme'})
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
+@csrf_exempt
 def save_page(request):
     if request.method == 'POST':
-        data = request.json()  # Assuming JSON data is sent in the request body
+        data = json.loads(request.body)  # Assuming JSON data is sent in the request body
         theme_name = data.get("theme_name")
         page_name_value = data.get('page_name')
         rows = data.get("rows")
@@ -185,6 +319,26 @@ def save_page(request):
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 
+@csrf_exempt
+def delete_theme(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        theme_id = data.get('id')
+
+        try:
+            with transaction.atomic():
+                # Delete ThemeName and its related records
+                ThemeName.objects.filter(id=theme_id).delete()
+
+                return JsonResponse({'success': True})
+
+        except Exception as e:
+            # Handle exceptions or log errors
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
 #fetch public themas (theme names or page names corresponding to the names of all the current tables in the database) 
 
 # def fetch_all_pages(request):
@@ -197,44 +351,60 @@ def save_page(request):
 
 #     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-
+@csrf_exempt
 def fetch_all_themes(request):
     if request.method == 'GET':
-        #fetch all available theme names from the ThemeName table
-        all_themes = ThemeName.objects.values_list('theme_name', flat=True)
+        # Fetch all available theme details from the ThemeName table
+        all_themes = ThemeName.objects.values('id', 'theme_name')
         return JsonResponse({'themes': list(all_themes)})
     return JsonResponse({'error': 'Invalid request method'}, status=400)
-
+@csrf_exempt
 def fetch_theme_pages(request):
     if request.method == 'POST':
-        data = request.json()
-        theme_name = data.get('theme_name')
+        data = json.loads(request.body)
+        theme_id = data.get('id')
         try:
             # Fetch the ThemeName instance
-            theme = ThemeName.objects.get(theme_name=theme_name)
+            theme = ThemeName.objects.get(id=theme_id)
         except ThemeName.DoesNotExist:
-            return JsonResponse({'error': f'Theme with name {theme_name} does not exist'}, status=404)
-        pages =theme.pages.all().values("page_name", "block_row", "block_column")
-        theme_pages = list(pages)
-        return JsonResponse({'pages': theme_pages})
-    return JsonResponse({'error': 'Invalid request method'}, status=400)
+            return JsonResponse({'error': f'Theme with id {theme_id} does not exist'}, status=404)
 
+        # Fetch pages with IDs associated with the specified ThemeName
+        pages = theme.pages.all().values('id', 'page_name', 'block_row', 'block_column')
+        theme_pages = list(pages)
+        theme_name = theme.theme_name
+        
+        # Include the name of the theme in the response
+        response_data = {
+            'theme_name': theme_name,
+            'pages': theme_pages
+        }
+        
+        return JsonResponse(response_data)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+@csrf_exempt
 def fetch_page_blocks(request):
     if request.method == 'POST':
-        data = request.json()
-        page_name = data.get('page_name')
-
+        data = json.loads(request.body)
+        page_id = data.get('id')
         try:
             # Fetch the PageName instance
-            page = PageName.objects.get(page_name=page_name)
+            page = PageName.objects.get(id=page_id)
         except PageName.DoesNotExist:
-            return JsonResponse({'error': f'Page with name {page_name} does not exist'}, status=404)
+            return JsonResponse({'error': f'Page with id {page_id} does not exist'}, status=404)
 
-        # Fetch all blocks associated with the specified PageName
-        blocks = page.blocks.all().values('name', 'url', 'option')
+        # Fetch all blocks with IDs associated with the specified PageName
+        blocks = page.blocks.all().values('id', 'name', 'url', 'option')
+        page_name = page.page_name  # Retrieve the page_name once
+
         results = []
         for block in blocks:
-            result = {'name': block['name'], 'option': block['option']}
+            result = {
+                'id': block['id'],
+                'name': block['name'],
+                'option': block['option'],
+            }
             url = block['url']
             for option, extensions in options.items():
                 for ext in extensions:
@@ -242,8 +412,13 @@ def fetch_page_blocks(request):
                     if os.path.exists(file_path):
                         result[option] = file_path
             results.append(result)
-        return JsonResponse({'blocks': results})
+
+        # Include the page_name in the final response
+        response_data = {'page_name': page_name, 'blocks': results}
+        return JsonResponse(response_data)
+    
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 
 #problem with two databases, which to fetch from on the two different scenarios??????????????
 # def get_image(request):

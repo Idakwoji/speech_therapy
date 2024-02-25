@@ -32,29 +32,32 @@ class CatLev0(BaseItem):
     class Meta:
         managed = False
         db_table = "cat_lev0"
-    def __str__(self):
-        return f'{self.id}: {self.name}'
+    # def __str__(self):
+    #     return f'{self.id}: {self.name}'
     
 class CatLev1(BaseItem):
+    cat_lev0 = models.ForeignKey(CatLev0, on_delete=models.CASCADE)
     class Meta:
         managed = False
         db_table = "cat_lev1"
-    def __str__(self):
-        return f'{self.id}: {self.name}'
+    # def __str__(self):
+    #     return f'{self.id}: {self.name}'
     
 class CatLev2(BaseItem):
+    cat_lev1 = models.ForeignKey(CatLev1, on_delete=models.CASCADE)
     class Meta:
         managed = False
         db_table = "cat_lev2"
-    def __str__(self):
-        return f'{self.id}: {self.name}'
+    # def __str__(self):
+    #     return f'{self.id}: {self.name}'
 
 class CatLev3(BaseItem):
+    cat_lev2 = models.ForeignKey(CatLev2, on_delete=models.CASCADE)
     class Meta:
         managed = False
         db_table = "cat_lev3"
-    def __str__(self):
-        return f'{self.id}: {self.name}'
+    # def __str__(self):
+    #     return f'{self.id}: {self.name}'
 
 class BaseTable(models.Model):
     id = models.AutoField(primary_key=True)
@@ -78,7 +81,7 @@ class HumorEnGeluiden(BaseTable):
 class FysiekeGedrag(BaseTable):
     class Meta:
         managed = False
-        db_table = "fysiekeGedrag"
+        db_table = "fysiekegedrag"
 
 class MuziekEnGeluid(BaseTable):
    class Meta:
@@ -93,7 +96,7 @@ class TafelDekken(BaseTable):
 class PersoonlijkenBezittelijkVoornaamwoord(BaseTable):
     class Meta:
         managed = False
-        db_table = 'PersoonlijkenBezittelijkVoornaamwoord'
+        db_table = 'persoonlijkenbezittelijkvoornaamwoord'
 
 class Gevaarlijk(BaseTable):
     class Meta:
@@ -108,12 +111,12 @@ class OmgaanMetSpullen(BaseTable):
 class TandenVerzorgen(BaseTable):
     class Meta:
         managed = False
-        db_table = 'tandenVerzorgen' 
+        db_table = 'tandenverzorgen' 
 
 class VerbondenheidEnGevoelens(BaseTable):
     class Meta:
         managed = False
-        db_table = 'VerbondenheidEnGevoelens'
+        db_table = 'verbondenheidengevoelens'
 
 class Gevoel(BaseTable):
     class Meta:
@@ -173,7 +176,7 @@ class Tijd(BaseTable):
 class AlgemeenMensen(BaseTable):
     class Meta:
         managed = False
-        db_table = 'algemeenMensen'
+        db_table = 'algemeenmensen'
 
 class Gymnastiek(BaseTable):
     class Meta:
@@ -208,12 +211,12 @@ class Overig(BaseTable):
 class TuinEnPark(BaseTable):
     class Meta:
         managed = False
-        db_table = "tuinEnPark"
+        db_table = "tuinenpark"
         
 class Badkamer(BaseTable):
     class Meta:
         managed = False
-        db_table = "badkamer "
+        db_table = "badkamer"
 
 class HebbenEnDelen(BaseTable):
     class Meta:
@@ -323,7 +326,7 @@ class Kerst(BaseTable):
 class RollenspelEnSprookjes(BaseTable):
     class Meta:
         managed = False
-        db_table = "rollenspelEnSprookjes"
+        db_table = "rollenspelensprookjes"
         
 class Vraagwoorden(BaseTable):
     class Meta:
@@ -470,7 +473,7 @@ class Winter(BaseTable):
         managed = False
         db_table = "winter"
 
-class Drinken(BaseItem):
+class Drinken(BaseTable):
     class Meta:
         managed = False
         db_table = "drinken"
@@ -488,7 +491,7 @@ class Speelgoed(BaseTable):
 class WinterKleding(BaseTable):
     class Meta:
         managed = False
-        db_table = "winterKleding"
+        db_table = "winterkleding"
 
 class Emotie(BaseTable):
     class Meta:
@@ -591,7 +594,7 @@ class ThemeName(models.Model):
     def __str__(self):
         return self.theme_name
     class Meta:
-        db_table = "Theme Names"
+        db_table = "themenames"
         
 class PageName(models.Model):
     page_name = models.CharField(max_length=255)
@@ -603,7 +606,7 @@ class PageName(models.Model):
     class Meta:
         #managed = False
         # Use the exact page_name as the table name
-        db_table = 'Page Names'
+        db_table = 'pagenames'
 
 class PageBlock(models.Model):
     name = models.CharField(max_length=255)
@@ -616,7 +619,4 @@ class PageBlock(models.Model):
     class Meta:
         #managed = False
         # Use the exact page_name as the table name
-        db_table = 'Page Blocks'
-ThemeName.objects.using("public_templates")        
-PageName.objects.using("public_templates")
-PageBlock.objects.using("public_templates")
+        db_table = 'pageblocks'
