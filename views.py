@@ -204,7 +204,7 @@ def fetch_data_table_entries(match):
                     if os.path.exists(file_path):
                         result[option] = file_path
             results.append(result)
-        return JsonResponse(results, safe=False)
+        return JsonResponse({"words_data": results}, safe=False)
     
     # Handle case where no matching table is found
     return JsonResponse({'message': 'No matching data table found.'}, status=404)
