@@ -27,6 +27,7 @@ class BaseItem(models.Model):
     name = models.CharField(max_length=255)
     class Meta:
         managed = False
+        abstract = True
 
 class CatLev0(BaseItem):
     class Meta:
@@ -36,7 +37,7 @@ class CatLev0(BaseItem):
     #     return f'{self.id}: {self.name}'
     
 class CatLev1(BaseItem):
-    cat_lev0 = models.ForeignKey(CatLev0, on_delete=models.CASCADE)
+    cat_lev0 = models.ForeignKey(CatLev0, on_delete=models.CASCADE, db_column='cat_lev0')
     class Meta:
         managed = False
         db_table = "cat_lev1"
@@ -44,7 +45,7 @@ class CatLev1(BaseItem):
     #     return f'{self.id}: {self.name}'
     
 class CatLev2(BaseItem):
-    cat_lev1 = models.ForeignKey(CatLev1, on_delete=models.CASCADE)
+    cat_lev1 = models.ForeignKey(CatLev1, on_delete=models.CASCADE, db_column='cat_lev1')
     class Meta:
         managed = False
         db_table = "cat_lev2"
@@ -52,7 +53,7 @@ class CatLev2(BaseItem):
     #     return f'{self.id}: {self.name}'
 
 class CatLev3(BaseItem):
-    cat_lev2 = models.ForeignKey(CatLev2, on_delete=models.CASCADE)
+    cat_lev2 = models.ForeignKey(CatLev2, on_delete=models.CASCADE, db_column='cat_lev2')
     class Meta:
         managed = False
         db_table = "cat_lev3"
@@ -75,518 +76,518 @@ class BaseTable(models.Model):
 class HumorEnGeluiden(BaseTable):
     class Meta:
         managed = False
-        db_table = "HumorEnGeluiden"
+        db_table = "Humor en geluiden"
 
 
 class FysiekeGedrag(BaseTable):
     class Meta:
         managed = False
-        db_table = "fysiekegedrag"
+        db_table = "Fysiekegedrag"
 
 class MuziekEnGeluid(BaseTable):
    class Meta:
         managed = False
-        db_table = "muziekEnGeluid"
+        db_table = "Muziek en geluid"
         
 class TafelDekken(BaseTable):
     class Meta:
         managed = False
-        db_table = "tafelDekken"
+        db_table = "Tafel dekken"
 
 class PersoonlijkenBezittelijkVoornaamwoord(BaseTable):
     class Meta:
         managed = False
-        db_table = 'persoonlijkenbezittelijkvoornaamwoord'
+        db_table = "Persoonlijk en bezittelijk voornaamwoor"
 
 class Gevaarlijk(BaseTable):
     class Meta:
         managed = False
-        db_table = 'gevaarlijk'
+        db_table = 'Gevaarlijk'
 
 class OmgaanMetSpullen(BaseTable):
     class Meta:
         managed = False
-        db_table = 'omgaanMetSpullen'
+        db_table = 'Omgaan met spullen'
 
 class TandenVerzorgen(BaseTable):
     class Meta:
         managed = False
-        db_table = 'tandenverzorgen' 
+        db_table = 'Tanden verzorgen' 
 
 class VerbondenheidEnGevoelens(BaseTable):
     class Meta:
         managed = False
-        db_table = 'verbondenheidengevoelens'
+        db_table = 'Verbondenheid en gevoelens'
 
 class Gevoel(BaseTable):
     class Meta:
         managed = False
-        db_table = 'gevoel'
+        db_table = 'Gevoel'
 
 class Ontbijten(BaseTable):
     class Meta:
         managed = False
-        db_table = 'ontbijten'
+        db_table = 'Ontbijten'
 
 class Tekenen(BaseTable):
     class Meta:
         managed = False
-        db_table = "tekenen"
+        db_table = "Tekenen"
 
 class AanUitkleding(BaseTable):
     class Meta:
         managed = False
-        db_table = 'aanUitkleding'
+        db_table = 'Aan en uitkleding'
 
 class Groente(BaseTable):
     class Meta:
         managed = False
-        db_table = 'groente'
+        db_table = 'Groente'
 
 class OpDeBeurt(BaseTable):
     class Meta:
         managed = False
-        db_table = 'opDeBeurt'
+        db_table = 'Op de beurt'
 
 class Tellen(BaseTable):
     class Meta:
         managed = False
-        db_table = 'tellen'
+        db_table = 'Tellen'
 
 class Afscheid(BaseTable):
     class Meta:
         managed = False
-        db_table = 'afscheid'
+        db_table = 'Afscheid'
 
 class Groeten(BaseTable):
     class Meta:
         managed = False
-        db_table = 'groeten'
+        db_table = 'Groeten'
 
 class OpReis(BaseTable):
     class Meta:
         managed = False
-        db_table = 'opReis'
+        db_table = 'Op reis'
 
 class Tijd(BaseTable):
     class Meta:
         managed = False
-        db_table = 'tijd'
+        db_table = 'Tijd'
 
 class AlgemeenMensen(BaseTable):
     class Meta:
         managed = False
-        db_table = 'algemeenmensen'
+        db_table = 'Mensen algemeen'
 
 class Gymnastiek(BaseTable):
     class Meta:
         managed = False
-        db_table = 'gymnastiek'
+        db_table = 'Gymnastiek'
 
 class OpenEnDichtDoen(BaseTable):
     class Meta:
         managed = False
-        db_table = 'openEnDichtDoen'
+        db_table = 'Open en dicht doen'
 
 class Toeval(BaseTable):
     class Meta:
         managed = False
-        db_table = "toeval"
+        db_table = "Toeval"
 
 class AvondEten(BaseTable):
     class Meta:
         managed = False
-        db_table = "avondEten"
+        db_table = "Avond eten"
 
 class HaarVerzorgen(BaseTable):
     class Meta:
         managed = False
-        db_table = "haarVerzorgen"
+        db_table = "Haar verzorgen"
 
 class Overig(BaseTable):
     class Meta:
         managed = False
-        db_table = "overig"
+        db_table = "Overig"
 
 class TuinEnPark(BaseTable):
     class Meta:
         managed = False
-        db_table = "tuinenpark"
+        db_table = "Tuin en park"
         
 class Badkamer(BaseTable):
     class Meta:
         managed = False
-        db_table = "badkamer"
+        db_table = "Badkamer"
 
 class HebbenEnDelen(BaseTable):
     class Meta:
         managed = False
-        db_table = "hebbenEnDelen"
+        db_table = "Hebben en delen"
 
 class Personen(BaseTable):
     class Meta:
         managed = False
-        db_table = "personen"
+        db_table = "Personen"
 
 class Uitjes(BaseTable):
     class Meta:
         managed = False
-        db_table = "uitjes"
+        db_table = "Uitjes"
         
 class Bal(BaseTable):
     class Meta:
         managed = False
-        db_table = "bal"
+        db_table = "Bal"
 
 class Herfst(BaseTable):
     class Meta:
         managed = False
-        db_table = "herfst"
+        db_table = "Herfst"
 
 class Planten(BaseTable):
     class Meta:
         managed = False
-        db_table = "planten"
+        db_table = "Planten"
         
 class Vergelijken(BaseTable):
     class Meta:
         managed = False
-        db_table = "vergelijken"
+        db_table = "Vergelijken"
         
 class BelangrijkeWoordjes(BaseTable):
     class Meta:
         managed = False
-        db_table = "belangrijkeWoordjes"
+        db_table = "Belangrijke woordjes"
 
 class Huis(BaseTable):
     class Meta:
         managed = False
-        db_table = "huis"
+        db_table = "Huis"
 
 class PoepenEnPlassen(BaseTable):
     class Meta:
         managed = False
-        db_table = "poepenEnPlassen"
+        db_table = "Poepen en plassen"
 
 class Verjaardag(BaseTable):
     class Meta:
         managed = False
-        db_table = "verjaardag"
+        db_table = "Verjaardag"
 
 class Boerderij(BaseTable):
     class Meta:
         managed = False
-        db_table = "boerderij"
+        db_table = "Boerderij"
 
 class HuisWerken(BaseTable):
     class Meta:
         managed = False
-        db_table = "huisWerken"
+        db_table = "Huis werken"
 
 class Rekenen(BaseTable):
     class Meta:
         managed = False
-        db_table = "rekenen"
+        db_table = "Rekenen"
 
 class Voortuigen(BaseTable):
     class Meta:
         managed = False
-        db_table = "voortuigen"
+        db_table = "Voortuigen"
 
 class BoodschappenDoen(BaseTable):
     class Meta:
         managed = False
-        db_table = "boodschappenDoen"
+        db_table = "Boodschappen doen"
 
 class Huisdieren(BaseTable):
     class Meta:
         managed = False
-        db_table = "huisdieren"
+        db_table = "Huisdieren"
 
 class RichtingDeWeg(BaseTable):
     class Meta:
         managed = False
-        db_table = "richtingDeWeg"
+        db_table = "Richting de weg"
 
 class Vormen(BaseTable):
     class Meta:
         managed = False
-        db_table = "vormen"
+        db_table = "Vormen"
 
 class Bos(BaseTable):
     class Meta:
         managed = False
-        db_table = "bos"
+        db_table = "Bos"
 
 class Kerst(BaseTable):
     class Meta:
         managed = False
-        db_table = "kerst"
+        db_table = "Kerst"
 
 class RollenspelEnSprookjes(BaseTable):
     class Meta:
         managed = False
-        db_table = "rollenspelensprookjes"
+        db_table = "Rollenspel en sprookjes"
         
 class Vraagwoorden(BaseTable):
     class Meta:
         managed = False
-        db_table = "vraagwoorden"
+        db_table = "Vraagwoorden"
 
 class Buiten(BaseTable):
     class Meta:
         managed = False
-        db_table = "buiten"
+        db_table = "Buiten"
 
 class Kleding(BaseTable):
     class Meta:
         managed = False
-        db_table = "kleding"
+        db_table = "Kleding"
 
 class Ruimte(BaseTable):
     class Meta:
         managed = False
-        db_table = "ruimte"
+        db_table = "Ruimte"
 
 class Vuur(BaseTable):
     class Meta:
         managed = False
-        db_table = "vuur"
+        db_table = "Vuur"
 
 class Communiceren(BaseTable):
     class Meta:
         managed = False
-        db_table = "communiceren"
+        db_table = "Communiceren"
 
 class KleineDiertjes(BaseTable):
     class Meta:
         managed = False
-        db_table = "kleineDiertjes"
+        db_table = "Kleine diertjes"
 
 class SamenAktiviteiten(BaseTable):
     class Meta:
         managed = False
-        db_table = "samenAktiviteiten"
+        db_table = "Samen aktiviteiten"
 
 class Wassen(BaseTable):
     class Meta:
         managed = False
-        db_table = "wassen"
+        db_table = "Wassen"
 
 class Denken(BaseTable):
     class Meta:
         managed = False
-        db_table = "denken"
+        db_table = "Denken"
 
 class Kleuren(BaseTable):
     class Meta:
         managed = False
-        db_table = "kleuren"
+        db_table = "Kleuren"
 
 class Schoen(BaseTable):
     class Meta:
         managed = False
-        db_table = "schoen"
+        db_table = "Schoen"
 
 class Water(BaseTable):
     class Meta:
         managed = False
-        db_table = "water"
+        db_table = "Water"
 
 class Dieren(BaseTable):
     class Meta:
         managed = False
-        db_table = "dieren"
+        db_table = "Dieren"
 
 class Knutselen(BaseTable):
     class Meta:
         managed = False
-        db_table = "knutselen"
+        db_table = "Knutselen"
 
 class Schrijven(BaseTable):
     class Meta:
         managed = False
-        db_table = "schrijven"
+        db_table = "Schrijven"
 
 class Weer(BaseTable):
     class Meta:
         managed = False
-        db_table = "weer"
+        db_table = "Weer"
 
 class Dierentuin(BaseTable):
     class Meta:
         managed = False
-        db_table = "dierentuin"
+        db_table = "Dierentuin"
 
 class Koken(BaseTable):
     class Meta:
         managed = False
-        db_table = "koken"
+        db_table = "Koken"
 
 class Sinterklaas(BaseTable):
     class Meta:
         managed = False
-        db_table = "sinterklaas"
+        db_table = "Sinterklaas"
 
 class WegwijsInDeGroep(BaseTable):
     class Meta:
         managed = False
-        db_table = "wegwijsInDeGroep"
+        db_table = "Wegwijs in de groep"
 
 class Doen(BaseTable):
     class Meta:
         managed = False
-        db_table = "doen"
+        db_table = "Doen"
 
 class KopjesEnBakers(BaseTable):
     class Meta:
         managed = False
-        db_table = "kopjesEnBakers"
+        db_table = "Kopjes en bakers"
 
 class Smaken(BaseTable):
     class Meta:
         managed = False
-        db_table = "smaken"
+        db_table = "Smaken"
 
 class Welkom(BaseTable):
     class Meta:
         managed = False
-        db_table = "welkom"
+        db_table = "Welkom"
 
 class Drankjes(BaseTable):
     class Meta:
         managed = False
-        db_table = "drankjes"
+        db_table = "Drankjes"
 
 class Kringroutines(BaseTable):
     class Meta:
         managed = False
-        db_table = "kringroutines"
+        db_table = "Kringroutines"
 
 class Snoep(BaseTable):
     class Meta:
         managed = False
-        db_table = "snoep"
+        db_table = "Snoep"
 
 class Winter(BaseTable):
     class Meta:
         managed = False
-        db_table = "winter"
+        db_table = "Winter"
 
 class Drinken(BaseTable):
     class Meta:
         managed = False
-        db_table = "drinken"
+        db_table = "Drinken"
 
 class Kruipen(BaseTable):
     class Meta:
         managed = False
-        db_table = "kruipen"
+        db_table = "Kruipen"
 
 class Speelgoed(BaseTable):
     class Meta:
         managed = False
-        db_table = "speelgoed"
+        db_table = "Speelgoed"
 
 class WinterKleding(BaseTable):
     class Meta:
         managed = False
-        db_table = "winterkleding"
+        db_table = "Winterkleding"
 
 class Emotie(BaseTable):
     class Meta:
         managed = False
-        db_table = "emotie"
+        db_table = "Emotie"
 
 class Lente(BaseTable):
     class Meta:
         managed = False
-        db_table = "lente"
+        db_table = "Lente"
 
 class Speeltuin(BaseTable):
     class Meta:
         managed = False
-        db_table = "speeltuin"
+        db_table = "Speeltuin"
 
 class ZeeSwembad(BaseTable):
     class Meta:
         managed = False
-        db_table = "zeeSwembad"
+        db_table = "Zee en zwemen"
 
 class Eruitzien(BaseTable):
     class Meta:
         managed = False
-        db_table = "eruitzien"
+        db_table = "Eruitzien"
 
 class Lichaamsdelen(BaseTable):
     class Meta:
         managed = False
-        db_table = "lichaamsdelen"
+        db_table = "Lichaamsdelen"
 
 class Spelen(BaseTable):
     class Meta:
         managed = False
-        db_table = "spelen"
+        db_table = "Spelen"
         
 class Ziek(BaseTable):
     class Meta:
         managed = False
-        db_table = "ziek"
+        db_table = "Ziek"
         
 class Eten(BaseTable):
     class Meta:
         managed = False
-        db_table = "eten"
+        db_table = "Eten"
 
 class Lunch(BaseTable):
     class Meta:
         managed = False
-        db_table = "lunch"
+        db_table = "Lunch"
         
 class SpelenEnWerken(BaseTable):
     class Meta:
         managed = False
-        db_table = "spelenEnWerken"
+        db_table = "Spelen en werken"
 
 class Zintuigen(BaseTable):
     class Meta:
         managed = False
-        db_table = "zintuigen"
+        db_table = "Zintuigen"
 
 class Familie(BaseTable):
     class Meta:
         managed = False
-        db_table = "familie"
+        db_table = "Familie"
 
 class MensenEnRelaties(BaseTable):
     class Meta:
         managed = False
-        db_table = "mensenEnRelaties"
+        db_table = "Mensen en relaties"
         
 class Spelletje(BaseTable):
     class Meta:
         managed = False
-        db_table = "spelletje"
+        db_table = "Spelletje"
 
 class Zomer(BaseTable):
     class Meta:
         managed = False
-        db_table = "zomer"
+        db_table = "Zomer"
         
 class Fruit(BaseTable):
     class Meta:
         managed = False
-        db_table = "fruit"
+        db_table = "Fruit"
 
 class Meten(BaseTable):
     class Meta:
         managed = False
-        db_table = "meten"
+        db_table = "Meten"
 
 class StraatEnVerkeer(BaseTable):
     class Meta:
         managed = False
-        db_table = "straatEnVerkeer"
+        db_table = "Straat en verkeer"
 
 # standard setup of public templates database 
 class ThemeName(models.Model):

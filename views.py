@@ -80,9 +80,11 @@ def perform_category_search(request):
         data = json.loads(request.body)
         query = data.get("query")
         for model in category_levels:
-            match = model.objects.filter(name__icontains=query).first()
+            match = model.objects.filter(name__icontains=query, name__iexact=query).first()
             if match:
                 return fetch_subcategories_or_data(match, model)
+            continue
+        return JsonResponse({'message': 'No matching category found.'})
 
 def fetch_subcategories_or_data(match, model):
     next_level_query = None
@@ -207,7 +209,7 @@ def fetch_data_table_entries(match):
         return JsonResponse({"words_data": results}, safe=False)
     
     # Handle case where no matching table is found
-    return JsonResponse({'message': 'No matching data table found.'}, status=404)
+    return JsonResponse({'message': 'No matching data table found.'})
 
 
 #use dynamic search to find words (create theme page for admin and therapist)
