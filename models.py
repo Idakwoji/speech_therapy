@@ -599,7 +599,6 @@ class ThemeName(models.Model):
         
 class PageName(models.Model):
     page_name = models.CharField(max_length=255)
-    block_row = models.IntegerField()
     block_column = models.IntegerField()
     theme_name = models.ForeignKey(ThemeName, on_delete=models.CASCADE, related_name='pages')
     def __str__(self):
@@ -612,7 +611,9 @@ class PageName(models.Model):
 class PageBlock(models.Model):
     name = models.CharField(max_length=255)
     url = models.CharField(max_length=255)
-    option = models.IntegerField()
+    image = models.BooleanField(default=False)
+    audio = models.BooleanField(default=False)
+    video = models.BooleanField(default=False)
     page_name = models.ForeignKey(PageName, on_delete=models.CASCADE, related_name='blocks')
 
     def __str__(self):

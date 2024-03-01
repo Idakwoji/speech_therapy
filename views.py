@@ -79,12 +79,15 @@ def perform_category_search(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         query = data.get("query")
-        for model in category_levels:
-            match = model.objects.filter(name__icontains=query, name__iexact=query).first()
-            if match:
-                return fetch_subcategories_or_data(match, model)
-            continue
-        return JsonResponse({'message': 'No matching category found.'})
+
+        if query is not None:  # Check if query is not None
+            for model in category_levels:
+                match = model.objects.filter(name__icontains=query).first()
+                if match:
+                    return fetch_subcategories_or_data(match, model)
+            return JsonResponse({'message': 'No matching category found.'})
+        else:
+            return JsonResponse({'message': 'Query parameter is None.'}, status=400)
 
 def fetch_subcategories_or_data(match, model):
     next_level_query = None
@@ -121,7 +124,7 @@ def fetch_next_subcategories_or_data(request):
         response_data = {}
         # Using the match level to determine the next level's query
         if model == "CatLev0":
-            match = CatLev0.objects.filter(word_id)
+            match = CatLev0.objects.get(id=word_id)
             next_level_query = CatLev1.objects.filter(cat_lev0=match)
             new_level = "CatLev1"
             # If no subcategories found, find the related data table
@@ -129,7 +132,7 @@ def fetch_next_subcategories_or_data(request):
                 return fetch_data_table_entries(match)
             
         elif model == "CatLev1":
-            match = CatLev1.objects.filter(word_id)
+            match = CatLev1.objects.get(id=word_id)
             next_level_query = CatLev2.objects.filter(cat_lev1=match)
             new_level = "CatLev2"
             # If no subcategories found, find the related data table
@@ -137,7 +140,7 @@ def fetch_next_subcategories_or_data(request):
                 return fetch_data_table_entries(match)
             
         elif model == "CatLev2":
-            match = CatLev2.objects.filter(word_id)
+            match = CatLev2.objects.get(id=word_id)
             next_level_query = CatLev3.objects.filter(cat_lev2=match)
             new_level = "CatLev3"
             # If no subcategories found, find the related data table
@@ -278,22 +281,24 @@ def save_theme(request):
 def save_page(request):
     if request.method == 'POST':
         data = json.loads(request.body)  # Assuming JSON data is sent in the request body
-        theme_name = data.get("theme_name")
+        theme_name_value = data.get("theme_name")
         page_name_value = data.get('page_name')
-        rows = data.get("rows")
         columns = data.get("columns")
         blocks_data = data.get('blocks', [])
 
         try:
             with transaction.atomic():
+                theme = ThemeName.objects.get(theme_name=theme_name_value)
                 # Create PageName
-                page = PageName.objects.create(page_name=page_name_value, block_row = rows, block_column = columns, theme_name=theme_name)
+                page = PageName.objects.create(page_name=page_name_value, block_column = columns, theme_name=theme)
 
                 # Create PageBlock instances and add them to the PageName's blocks field
                 for block_data in blocks_data:
                     name = block_data.get('name')
                     table_name = block_data.get('table_name')
-                    option = block_data.get('option')
+                    image = block_data.get('image')
+                    audio = block_data.get("audio")
+                    video = block_data.get("video")
 
                     # Dynamically get the model class based on table_name
                     model_class = None
@@ -310,7 +315,7 @@ def save_page(request):
                             return JsonResponse({'error': 'File not found'}, status=404)
 
                         # Create a new PageBlock instance
-                        PageBlock.objects.create(name=name, url=url, option=option, page_name=page)
+                        PageBlock.objects.create(name=name, url=url, image=image, audio=audio, video=video, page_name=page)
 
                 return JsonResponse({'success': True})
 
@@ -360,6 +365,7 @@ def fetch_all_themes(request):
         all_themes = ThemeName.objects.values('id', 'theme_name')
         return JsonResponse({'themes': list(all_themes)})
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 @csrf_exempt
 def fetch_theme_pages(request):
     if request.method == 'POST':
@@ -372,7 +378,7 @@ def fetch_theme_pages(request):
             return JsonResponse({'error': f'Theme with id {theme_id} does not exist'}, status=404)
 
         # Fetch pages with IDs associated with the specified ThemeName
-        pages = theme.pages.all().values('id', 'page_name', 'block_row', 'block_column')
+        pages = theme.pages.all().values('id', 'page_name', 'block_column')
         theme_pages = list(pages)
         theme_name = theme.theme_name
         
@@ -385,6 +391,7 @@ def fetch_theme_pages(request):
         return JsonResponse(response_data)
     
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 @csrf_exempt
 def fetch_page_blocks(request):
     if request.method == 'POST':
