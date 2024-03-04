@@ -21,6 +21,8 @@ urlpatterns = [
     #path("api/get_video", views.get_video),
     path("api/save_theme", views.save_theme),
     path("api/save_page", views.save_page),
+    path("api/delete_page", views.delete_page),
+    path("api/delete_blocks", views.delete_blocks),
     #path("api/fetch_all_pages", views.fetch_all_pages),
     path("api/compare_sentences", views.compare_sentences),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

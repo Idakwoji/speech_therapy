@@ -345,6 +345,53 @@ def delete_theme(request):
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
+@csrf_exempt
+def delete_page(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        page_id = data.get('id')  # The unique ID of the page to be deleted
+
+        try:
+            with transaction.atomic():
+                # Attempt to find and delete the specified page
+                page_to_delete = PageName.objects.get(id=page_id).delete()
+
+                return JsonResponse({'success': True})
+
+        except PageName.DoesNotExist:
+            return JsonResponse({'error': f'Page with id {page_id} does not exist.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+@csrf_exempt
+def delete_blocks(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        page_id = data.get('id')
+        blocks_to_delete = data.get('blocks', [])  # Assume this is a list of block IDs to delete
+
+        try:
+            with transaction.atomic():
+                # Delete specified blocks for the page
+                for block_id in blocks_to_delete:
+                    try:
+                        block = PageBlock.objects.get(id=block_id, page_name_id=page_id)
+                        block.delete()
+                    except PageBlock.DoesNotExist:
+                        # If a specific block doesn't exist, you can choose to ignore or log this
+                        continue  # Or log.error("Block with id {block_id} not found.")
+
+                return JsonResponse({'success': True})
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
 
 #fetch public themas (theme names or page names corresponding to the names of all the current tables in the database) 
 
@@ -404,7 +451,7 @@ def fetch_page_blocks(request):
             return JsonResponse({'error': f'Page with id {page_id} does not exist'}, status=404)
 
         # Fetch all blocks with IDs associated with the specified PageName
-        blocks = page.blocks.all().values('id', 'name', 'url', 'option')
+        blocks = page.blocks.all().values('id', 'name', 'url', 'image', 'audio', 'video')
         page_name = page.page_name  # Retrieve the page_name once
 
         results = []
@@ -412,7 +459,9 @@ def fetch_page_blocks(request):
             result = {
                 'id': block['id'],
                 'name': block['name'],
-                'option': block['option'],
+                'image': block['image'],
+                'audio': block['audio'],
+                'video': block['video'],
             }
             url = block['url']
             for option, extensions in options.items():
