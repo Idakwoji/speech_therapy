@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.postgres.search import SearchVectorField
 from django.contrib.postgres.indexes import GinIndex
+from django.contrib.auth.models import User
+from pyotp import TOTP
 
 # class Word(models.Model):
 #     name = models.CharField(max_length=255)
@@ -622,3 +624,31 @@ class PageBlock(models.Model):
         #managed = False
         # Use the exact page_name as the table name
         db_table = 'pageblocks'
+
+# Handling user data
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    is_therapist = models.BooleanField(default=False)
+    is_assistant = models.BooleanField(default=False)
+    is_client = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
+    totp_secret_key = models.CharField(max_length=16, null=True, blank=True)
+
+class Admin(models.Model):
+    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE)
+    
+class Therapist(models.Model):
+    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='therapist_profile')
+
+class Assistant(models.Model):
+    therapist = models.ForeignKey(Therapist, on_delete=models.CASCADE, related_name='assistants')
+    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='assistant_profile')
+
+class Client(models.Model):
+    assigned_therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, null=True, blank=True, related_name='clients')
+    assigned_assistant = models.ForeignKey(Assistant, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_clients')
+    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='client_profile')
+
+class Assignment(models.Model):
+    assigned_to = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='assignments')
+    assigned_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='given_assignments')

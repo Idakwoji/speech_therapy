@@ -6,6 +6,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("api/login", views.login),
+    path("api/enable_2fa", views.enable_2fa),
+    path("api/verify_2fa", views.verify_2fa),
     path("api/fetch_all_themes", views.fetch_all_themes),
     path("api/fetch_theme_pages", views.fetch_theme_pages),
     path("api/fetch_page_blocks", views.fetch_page_blocks),

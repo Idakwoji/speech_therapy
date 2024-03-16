@@ -1,35 +1,144 @@
-from django.http import JsonResponse, HttpResponse,StreamingHttpResponse
+from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.db import connections, transaction
 import requests
 from django.http import FileResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from io import BytesIO
 import json
 import base64
 import os
 #import zipfile
 import mimetypes
+from pyotp import TOTP
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth.decorators import login_required
 from random import sample
-from .models import CatLev0, CatLev1, CatLev2, CatLev3, ThemeName, PageName, PageBlock, HumorEnGeluiden, FysiekeGedrag, MuziekEnGeluid, TafelDekken, PersoonlijkenBezittelijkVoornaamwoord, Gevaarlijk, OmgaanMetSpullen, TandenVerzorgen, VerbondenheidEnGevoelens,Gevoel,Ontbijten, Tekenen, AanUitkleding, Groente, OpDeBeurt, Tellen, Afscheid,Groeten,OpReis,Tijd,AlgemeenMensen,Gymnastiek,OpenEnDichtDoen,Toeval,AvondEten,HaarVerzorgen,Overig,TuinEnPark,Badkamer,HebbenEnDelen,Personen,Uitjes,Bal,Herfst, Planten,Vergelijken, BelangrijkeWoordjes,Huis,PoepenEnPlassen,Verjaardag,Boerderij,HuisWerken,Rekenen,Voortuigen,BoodschappenDoen,Huisdieren,RichtingDeWeg,Vormen,Bos,Kerst,RollenspelEnSprookjes,Vraagwoorden, Buiten,Kleding,Ruimte,Vuur,Communiceren,KleineDiertjes,SamenAktiviteiten,Wassen,Denken,Kleuren,Schoen,Water,Dieren,Knutselen, Schrijven, Weer, Dierentuin,Koken,Sinterklaas,WegwijsInDeGroep,Doen,KopjesEnBakers,Smaken,Welkom, Drankjes,Kringroutines,Snoep,Winter,Drinken,Kruipen,Speelgoed,WinterKleding,Emotie,Lente,Speeltuin,ZeeSwembad,Eruitzien,Lichaamsdelen,Spelen,Ziek,Eten,Lunch,SpelenEnWerken,Zintuigen,Familie,MensenEnRelaties,Spelletje,Zomer,Fruit,Meten,StraatEnVerkeer
+from .models import UserProfile, Client, Assistant, Therapist, CatLev0, CatLev1, CatLev2, CatLev3, ThemeName, PageName, PageBlock, HumorEnGeluiden, FysiekeGedrag, MuziekEnGeluid, TafelDekken, PersoonlijkenBezittelijkVoornaamwoord, Gevaarlijk, OmgaanMetSpullen, TandenVerzorgen, VerbondenheidEnGevoelens,Gevoel,Ontbijten, Tekenen, AanUitkleding, Groente, OpDeBeurt, Tellen, Afscheid,Groeten,OpReis,Tijd,AlgemeenMensen,Gymnastiek,OpenEnDichtDoen,Toeval,AvondEten,HaarVerzorgen,Overig,TuinEnPark,Badkamer,HebbenEnDelen,Personen,Uitjes,Bal,Herfst, Planten,Vergelijken, BelangrijkeWoordjes,Huis,PoepenEnPlassen,Verjaardag,Boerderij,HuisWerken,Rekenen,Voortuigen,BoodschappenDoen,Huisdieren,RichtingDeWeg,Vormen,Bos,Kerst,RollenspelEnSprookjes,Vraagwoorden, Buiten,Kleding,Ruimte,Vuur,Communiceren,KleineDiertjes,SamenAktiviteiten,Wassen,Denken,Kleuren,Schoen,Water,Dieren,Knutselen, Schrijven, Weer, Dierentuin,Koken,Sinterklaas,WegwijsInDeGroep,Doen,KopjesEnBakers,Smaken,Welkom, Drankjes,Kringroutines,Snoep,Winter,Drinken,Kruipen,Speelgoed,WinterKleding,Emotie,Lente,Speeltuin,ZeeSwembad,Eruitzien,Lichaamsdelen,Spelen,Ziek,Eten,Lunch,SpelenEnWerken,Zintuigen,Familie,MensenEnRelaties,Spelletje,Zomer,Fruit,Meten,StraatEnVerkeer
 
-#set user sessions
-def set_session(request):
+
+#User management
+
+
+@csrf_exempt
+def login(request):
     if request.method == 'POST':
-        username = request.POST.get('username')  # Get the username from the POST data
-        request.session['username'] = username
-        return HttpResponse('Session data set.')
-    else:
-        return HttpResponse('Invalid request method', status=400)
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
 
-def get_session(request):
-    username = request.session.get('username', 'DefaultUsername')
-    return HttpResponse(f'Username from session: {username}')
+        if not username or not password:
+            return JsonResponse({'status': 'MISSING_FIELDS'})
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            auth_login(request, user)  # This starts the session
+            user_profile = get_object_or_404(UserProfile, user=user)
+
+            if not any([user_profile.is_therapist, user_profile.is_assistant, user_profile.is_client, user_profile.is_admin]):
+                return JsonResponse({'status': 'INVALID_USER_TYPE'})
+
+            if not user_profile.totp_secret_key:
+                return JsonResponse({'status': '2FA_NOT_ENABLED'})
+
+            # Mark the session as partially authenticated
+            request.session['2fa_verified'] = False
+            return JsonResponse({'status': '2FA_VERIFY'})
+
+        else:
+            return JsonResponse({'status': 'INVALID_CREDENTIALS'})
+
+    return JsonResponse({'status': 'INVALID_REQUEST_METHOD'})
+
+@csrf_exempt
+@login_required
+def enable_2fa(request):
+    user_profile = UserProfile.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        try:
+            if user_profile.totp_secret_key:
+                return JsonResponse({'status': '2FA_ALREADY_ENABLED'})
+
+            totp = TOTP.random_base32()
+            user_profile.totp_secret_key = totp.secret
+            user_profile.save()
+
+            return JsonResponse({'status': '2FA_ENABLED', 'totp_uri': totp.provisioning_uri(request.user.username, issuer_name='backend')})
+
+        except Exception as e:
+            return JsonResponse({'status': 'ERROR', 'message': str(e)})
+
+    return JsonResponse({'status': 'INVALID_REQUEST_METHOD'})
+
+@csrf_exempt
+@login_required
+def verify_2fa(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user = request.user
+        user_profile = get_object_or_404(UserProfile, user=user)
+        entered_code = data.get('otp_code')
+        totp = TOTP(user_profile.totp_secret_key)
+
+        if totp.verify(entered_code):
+            # Mark the session as fully authenticated
+            request.session['2fa_verified'] = True
+            return JsonResponse({'status': '2FA_VERIFIED'})
+        else:
+            return JsonResponse({'status': 'INVALID_2FA_CODE'})
+
+    return JsonResponse({'status': 'INVALID_REQUEST_METHOD'})
+
+@csrf_exempt
+def create_user_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        account_type = request.POST.get('account_type')
+        assigned_assistant_id = request.POST.get('assigned_assistant_id')
+
+        if account_type not in ['client', 'assistant']:
+            return JsonResponse({'error': 'Invalid account type'}, status=400)
+
+        # Create User
+        user = User.objects.create_user(username=username, password=password)
+
+        # Create UserProfile
+        user_profile = UserProfile.objects.create(user=user)
+
+        if account_type == 'client':
+            user_profile.is_client = True
+            client = Client.objects.create(user_profile=user_profile)
+            if assigned_assistant_id:
+                assistant = get_object_or_404(Assistant, pk=assigned_assistant_id)
+                client.assigned_assistant = assistant
+                client.save()
+        elif account_type == 'assistant':
+            user_profile.is_assistant = True
+            assistant = Assistant.objects.create(user_profile=user_profile)
+
+        # Assuming the therapist is the current user
+        therapist = get_object_or_404(Therapist, user_profile__user=request.user)
+        # Link to the therapist's UserProfile
+        if user_profile.is_client:
+            client.assigned_therapist = therapist
+            client.save()
+        elif user_profile.is_assistant:
+            assistant.therapist = therapist
+            assistant.save()
+
+        user_profile.save()
+
+        return JsonResponse({'message': 'User created successfully'}, status=201)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 
-    
-
+# Themes, Pages and Blocks
 
 category_levels = [CatLev0, CatLev1, CatLev2, CatLev3]
 #initialize all database model classes in the existing words database
@@ -425,7 +534,7 @@ def fetch_theme_pages(request):
             return JsonResponse({'error': f'Theme with id {theme_id} does not exist'}, status=404)
 
         # Fetch pages with IDs associated with the specified ThemeName
-        pages = theme.pages.all().values('id', 'page_name', 'block_column')
+        pages = theme.pages.all().values('id', 'page_name')
         theme_pages = list(pages)
         theme_name = theme.theme_name
         
@@ -450,6 +559,7 @@ def fetch_page_blocks(request):
         except PageName.DoesNotExist:
             return JsonResponse({'error': f'Page with id {page_id} does not exist'}, status=404)
 
+        columns = page.block_column
         # Fetch all blocks with IDs associated with the specified PageName
         blocks = page.blocks.all().values('id', 'name', 'url', 'image', 'audio', 'video')
         page_name = page.page_name  # Retrieve the page_name once
@@ -459,20 +569,20 @@ def fetch_page_blocks(request):
             result = {
                 'id': block['id'],
                 'name': block['name'],
-                'image': block['image'],
-                'audio': block['audio'],
-                'video': block['video'],
             }
             url = block['url']
             for option, extensions in options.items():
                 for ext in extensions:
                     file_path = os.path.join(url, f"{url}{ext}")
                     if os.path.exists(file_path):
-                        result[option] = file_path
+                        if block[option]:
+                            result[option] = file_path
+                        else:
+                            result[option] = False
             results.append(result)
 
         # Include the page_name in the final response
-        response_data = {'page_name': page_name, 'blocks': results}
+        response_data = {'page_name': page_name, "columns": columns, 'blocks': results}
         return JsonResponse(response_data)
     
     return JsonResponse({'error': 'Invalid request method'}, status=400)
@@ -599,7 +709,11 @@ def fetch_page_blocks(request):
 #                 return HttpResponse("Audio file not found", status=404)
 #         except json.JSONDecodeError:
 #             return HttpResponse("Invalid JSON payload", status=400)
-        
+
+
+# Audio comparison and model interaction
+
+
 @csrf_exempt
 def compare_sentences(request):
     if request.method == 'POST':
